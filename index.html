@@ -1,0 +1,692 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<title>생리대 교체 관찰 기록</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* Layout: one-handed phone tool. Sticky tab bar, one column of large tap targets; timer card above the current step. */
+:root{
+  --bg:#EEF2F4; --surface:#FFFFFF; --sunk:#E3E9ED; --ink:#16212A; --muted:#566573; --line:#D3DCE2;
+  --accent:#0E6A72; --accent-ink:#FFFFFF;
+  --pos:#1D7A4C; --pos-soft:#DDF1E6; --neg:#BE3B2B; --neg-soft:#F8E0DC; --warn:#A86A12; --warn-soft:#F7EBD5; --na:#6E7B87; --na-soft:#E4E8EB;
+  --f-body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+  --r:14px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0F161B; --surface:#172129; --sunk:#111A20; --ink:#E5ECEF; --muted:#98A7B2; --line:#2A3740;
+  --accent:#4DB2B9; --accent-ink:#06191B;
+  --pos:#4CC28A; --pos-soft:#14301F; --neg:#F07A68; --neg-soft:#3A1C17; --warn:#E3B04B; --warn-soft:#352812; --na:#93A1AC; --na-soft:#222D35;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0F161B; --surface:#172129; --sunk:#111A20; --ink:#E5ECEF; --muted:#98A7B2; --line:#2A3740;
+  --accent:#4DB2B9; --accent-ink:#06191B;
+  --pos:#4CC28A; --pos-soft:#14301F; --neg:#F07A68; --neg-soft:#3A1C17; --warn:#E3B04B; --warn-soft:#352812; --na:#93A1AC; --na-soft:#222D35;
+  color-scheme:dark}
+*{box-sizing:border-box}
+html,body{background:var(--bg)}
+body{color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5;-webkit-tap-highlight-color:transparent}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.wrap{max-width:640px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:12px 40px}
+header.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--line)}
+header .in{max-width:640px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:8px;display:flex;align-items:center;gap:12px}
+.brand{font-weight:700;font-size:15px;letter-spacing:-.01em;white-space:nowrap}
+.brand small{display:block;font-weight:400;font-size:11px;color:var(--muted);letter-spacing:.02em}
+.tabs{margin-left:auto;display:flex;gap:4px;background:var(--sunk);padding:3px;border-radius:10px}
+.tabs button{border:0;background:transparent;padding:6px 12px;border-radius:8px;font-size:14px;color:var(--muted)}
+.tabs button[aria-selected="true"]{background:var(--surface);color:var(--ink);font-weight:500;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+h2{font-size:18px;margin:4px 0 0;text-wrap:balance}
+.sub{color:var(--muted);font-size:13px;margin:2px 0 0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+.stack{display:flex;flex-direction:column;gap:12px}
+.lbl{font-size:12px;color:var(--muted);letter-spacing:.04em;margin-bottom:6px;display:block}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{border:1px solid var(--line);background:var(--surface);padding:9px 14px;border-radius:10px;font-size:14px;min-height:42px}
+.seg button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:500}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.field input,.field select,textarea{width:100%;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:10px 12px;min-height:44px}
+textarea{min-height:84px;resize:vertical}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:10px 14px;min-height:44px;font-weight:500}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.big{width:100%;min-height:64px;font-size:18px;border-radius:16px}
+.btn.ghost{background:transparent}
+.btn.danger{color:var(--neg);border-color:var(--neg)}
+.btn:disabled{opacity:.4;cursor:default}
+.note{font-size:13px;color:var(--muted);background:var(--sunk);border-radius:10px;padding:10px 12px}
+.note b{color:var(--ink);font-weight:500}
+
+/* live session */
+.meta{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;font-size:13px;color:var(--muted)}
+.meta .pill{background:var(--sunk);color:var(--ink);padding:3px 9px;border-radius:999px;font-weight:500}
+.meta .clock{margin-left:auto;font-family:var(--f-mono);color:var(--ink);font-variant-numeric:tabular-nums}
+.timer{width:100%;text-align:left;border:2px solid var(--line);background:var(--surface);border-radius:18px;padding:14px 16px;display:grid;grid-template-columns:auto 1fr;gap:4px 16px;align-items:center;transition:border-color .2s,background .2s}
+.timer .num{font-family:var(--f-mono);font-weight:600;font-size:52px;line-height:1;font-variant-numeric:tabular-nums;grid-row:span 2;min-width:3.4ch}
+.timer .num small{font-size:20px;margin-left:2px;color:var(--muted)}
+.timer .what{font-size:13px;color:var(--muted)}
+.timer .act{font-size:16px;font-weight:500}
+.timer .meter{grid-column:1/-1;height:8px;border-radius:99px;background:var(--sunk);overflow:hidden;margin-top:8px;position:relative}
+.timer .meter i{position:absolute;inset:0 auto 0 0;background:var(--accent);border-radius:99px}
+.timer.near{border-color:var(--warn);background:var(--warn-soft)}
+.timer.near .meter i{background:var(--warn)}
+.timer.over{border-color:var(--neg);background:var(--neg-soft)}
+.timer.over .meter i{background:var(--neg)}
+.timer.over .num{color:var(--neg)}
+.timer.done{border-color:var(--pos);background:var(--pos-soft)}
+.timer.done .meter i{background:var(--pos)}
+.timer.done .num{color:var(--pos)}
+.step{display:grid;gap:8px}
+.step .no{font-family:var(--f-mono);font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.step .txt{font-size:19px;font-weight:700;line-height:1.4;text-wrap:balance;letter-spacing:-.01em}
+.crit{display:grid;grid-template-columns:auto 1fr;gap:4px 8px;font-size:13px}
+.crit .k{font-weight:700;width:1.4em;text-align:center;border-radius:5px}
+.crit .k.p{color:var(--pos);background:var(--pos-soft)}
+.crit .k.n{color:var(--neg);background:var(--neg-soft)}
+.marks{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mk{border:0;border-radius:16px;min-height:76px;font-size:22px;font-weight:700;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.2}
+.mk small{font-size:12px;font-weight:500;opacity:.85}
+.mk.p{background:var(--pos);color:var(--surface)}
+.mk.n{background:var(--neg);color:var(--surface)}
+.subacts{display:flex;flex-wrap:wrap;gap:8px}
+.subacts .btn{flex:1 1 auto;font-size:14px}
+.chips{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.chip{border:1.5px dashed var(--line);background:var(--surface);border-radius:12px;padding:8px 10px;text-align:left;font-size:13px;min-height:52px}
+.chip b{display:block;font-size:14px}
+.chip.ok{border-style:solid;border-color:var(--pos);background:var(--pos-soft)}
+.chip.wait{border-color:var(--warn);background:var(--warn-soft)}
+.grid16{display:grid;grid-template-columns:repeat(8,1fr);gap:5px}
+.cell{border:1px solid var(--line);background:var(--surface);border-radius:8px;min-height:44px;padding:2px 0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-variant-numeric:tabular-nums}
+.cell .n{font-size:10px;color:var(--muted);font-family:var(--f-mono)}
+.cell .v{font-size:16px;font-weight:700;line-height:1.1}
+.cell.p{background:var(--pos-soft);border-color:var(--pos)}.cell.p .v{color:var(--pos)}
+.cell.m{background:var(--neg-soft);border-color:var(--neg)}.cell.m .v{color:var(--neg)}
+.cell.x{background:var(--na-soft)}.cell.x .v{color:var(--na);font-size:11px}
+.cell.w{background:var(--warn-soft);border-color:var(--warn)}.cell.w .v{color:var(--warn);font-size:11px}
+.cell.cur{outline:2.5px solid var(--accent);outline-offset:1px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:14px;max-width:calc(100% - 32px);z-index:20;box-shadow:0 6px 20px rgba(0,0,0,.2)}
+.sheet{position:fixed;inset:0;z-index:15;background:rgba(10,16,20,.45);display:flex;align-items:flex-end;justify-content:center}
+.sheet .panel{background:var(--surface);width:100%;max-width:640px;border-radius:18px 18px 0 0;padding:18px max(16px,env(safe-area-inset-right,0px)) calc(18px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:grid;gap:12px}
+.sheet .opts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.sheet .opts .btn{min-height:56px;font-size:16px}
+
+/* records */
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:13px;font-variant-numeric:tabular-nums}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+th{font-weight:500;color:var(--muted);font-size:12px;background:var(--sunk)}
+tr:last-child td{border-bottom:0}
+td.wrap{white-space:normal;min-width:180px}
+.r-p{color:var(--pos);font-weight:700}.r-m{color:var(--neg);font-weight:700}.r-x{color:var(--na)}
+.rec{display:grid;grid-template-columns:1fr auto;gap:2px 12px;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line);width:100%;background:transparent;border-left:0;border-right:0;border-top:0;text-align:left}
+.rec:last-child{border-bottom:0}
+.rec .t{font-weight:500}
+.rec .s{font-size:12px;color:var(--muted)}
+.rec .pct{font-family:var(--f-mono);font-size:20px;font-weight:600;grid-row:span 2;font-variant-numeric:tabular-nums}
+.big-num{font-family:var(--f-mono);font-size:40px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.kpis div{background:var(--sunk);border-radius:12px;padding:10px 12px}
+.kpis .k{font-size:12px;color:var(--muted)}
+.kpis .v{font-family:var(--f-mono);font-size:22px;font-weight:600;font-variant-numeric:tabular-nums}
+.code{font-family:var(--f-mono);font-size:13px;word-break:break-all;background:var(--sunk);border-radius:10px;padding:10px 12px;user-select:all}
+.ioa-pick{display:grid;grid-template-columns:repeat(8,1fr);gap:5px}
+.ioa-pick button{min-height:44px;border:1px solid var(--line);border-radius:8px;background:var(--surface);display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ioa-pick button .n{font-size:10px;color:var(--muted);font-family:var(--f-mono)}
+.ioa-pick button .v{font-weight:700}
+.agree{color:var(--pos);font-weight:700}.dis{color:var(--neg);font-weight:700}
+@media (max-width:420px){
+  .grid16,.ioa-pick{grid-template-columns:repeat(8,1fr);gap:4px}
+  .timer .num{font-size:44px}
+  .row2{grid-template-columns:1fr}
+  .tabs button{padding:6px 9px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<header class="bar"><div class="in">
+  <div class="brand">생리대 교체 관찰<small>16단계 과제분석 · 10초 반응</small></div>
+  <nav class="tabs" role="tablist">
+    <button role="tab" id="tab-obs" aria-selected="true" data-tab="obs">관찰</button>
+    <button role="tab" id="tab-rec" aria-selected="false" data-tab="rec">기록</button>
+    <button role="tab" id="tab-ioa" aria-selected="false" data-tab="ioa">IOA</button>
+  </nav>
+</div></header>
+
+<main class="wrap">
+  <section id="v-obs"></section>
+  <section id="v-rec" hidden></section>
+  <section id="v-ioa" hidden></section>
+</main>
+<div id="sheet" class="sheet" hidden></div>
+<div id="toast" class="toast" hidden></div>
+
+<script>
+(function(){
+"use strict";
+const STEPS=[
+ ["사용한 생리대를 속옷에서 완전히 떼어낸다.","날개와 본체가 속옷에서 모두 떨어짐","한쪽 날개나 끝이 속옷에 붙은 채로 다음 단계로 넘어감"],
+ ["사용한 생리대를 흡수면이 안쪽이 되도록 말거나 접는다.","빨간 얼룩 면이 안으로 들어가게 말거나 접음","얼룩 면이 바깥으로 나오게 맒, 펼친 채로 둠"],
+ ["사용한 생리대의 오염된 부분이 보이지 않도록 화장지로 감싼다.","감싼 뒤 빨간 얼룩이 보이지 않음(준비 방법은 무관)","얼룩이 보임, 감싸지 않고 버림, 화장지가 아닌 것으로 감쌈"],
+ ["감싼 생리대를 휴지통에 버린다.","휴지통 안에 넣음","변기에 버림, 바닥·선반에 둠"],
+ ["화장지로 외음부(옷 위에서 해당 위치)를 몸 앞쪽에서 뒤쪽으로 한 방향으로 닦는다.","앞→뒤로 닦음(여러 번 닦아도 매번 앞→뒤이면 +)","뒤→앞, 왔다 갔다 문지름, 닦지 않음"],
+ ["닦은 화장지를 변기에 버린다.","변기 또는 휴지통 안에 넣음","손에 들고 있음, 바닥이나 선반에 둠"],
+ ["새 생리대 한 개를 꺼낸다.","하나만 꺼냄","두 개 이상 꺼내고 그대로 둠"],
+ ["새 생리대의 포장지를 벗겨 생리대를 펼친다.","포장지를 완전히 벗기고 생리대를 펼침","접힌 채로 두고 다음 단계로 넘어감"],
+ ["생리대 포장지를 휴지통에 버린다.","16단계 시작 전 언제든 휴지통에 버림","16단계 시작 때까지 버리지 않음, 변기에 버림"],
+ ["생리대의 접착면이 속옷 안쪽 면을 향하도록 방향을 맞춰 잡는다.","끈적한 면이 속옷 쪽을 향하게 듦","흡수면이 속옷 쪽을 향함(거꾸로 듦)"],
+ ["생리대가 속옷 안쪽의 덧댄 천을 모두 덮도록 앞뒤 방향으로 길게 놓는다.","앞뒤 방향으로 놓아 덧댄 천이 보이지 않게 모두 덮음","치우쳐 덧댄 천이 드러남, 가로로 놓음"],
+ ["생리대를 눌러 속옷에 붙여 고정한다.","손을 떼도 생리대가 움직이지 않음","올려만 두고 누르지 않아 들뜸"],
+ ["양쪽 날개를 속옷을 감싸도록 바깥면으로 접어 붙여 고정한다.","두 날개 모두 속옷 바깥면에 붙음","한쪽만 붙임, 날개를 안쪽에 붙임"],
+ ["변기에서 일어나 속옷과 하의를 올린다.","속옷과 하의를 모두 허리까지 올림","하나만 올림, 엉덩이나 허벅지에 걸쳐 둠"],
+ ["변기의 물을 내린다.","6단계 이후, 16단계 전에 물을 내림","16단계 시작 때까지 내리지 않음, 6단계 전에만 내림"],
+ ["비누로 양손을 문질러 씻은 후 흐르는 물에 헹군다.","비누를 양손에 문지르고 거품이 남지 않게 헹굼","물로만 씻음, 한 손만 씻음, 거품이 남음"]
+];
+const FREE=[8,14]; // 9·15단계 (0-based)
+const CONDS=["기초선","Phase 1","일반속옷 전이평가","Phase 2","유지","일반화"];
+const PARTS=["대상자1","대상자2","대상자3"];
+const ROLES=["연구자","제2관찰자"];
+const KEY="mpt-observe-v1";
+const LIMIT=10;
+let EMBED=false;try{EMBED=window.self!==window.top;}catch(e){EMBED=true;}
+
+let db={settings:{role:"연구자",name:"",vibrate:false},records:[],live:null,setup:{participant:"대상자1",condition:"기초선",session:"",date:""}};
+try{const raw=localStorage.getItem(KEY);if(raw){const d=JSON.parse(raw);db=Object.assign(db,d);db.settings=Object.assign({role:"연구자",name:"",vibrate:false},d.settings||{});}}catch(e){}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(db));}catch(e){}}
+
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const today=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");};
+const fmtClock=ms=>{const s=Math.max(0,Math.floor(ms/1000));return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0");};
+const sym=r=>r==="+"?"+":r==="-"?"−":r==="N"?"못 봄":"";
+const pctOf=steps=>{const p=steps.filter(s=>s.r==="+").length;return {p,pct:Math.round(p/16*1000)/10};};
+
+let toastT;
+function toast(msg){const t=$("#toast");t.textContent=msg;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>t.hidden=true,2600);}
+
+/* ---------- tabs ---------- */
+let tab="obs";
+document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{tab=b.dataset.tab;render();});
+
+/* ---------- wake lock ---------- */
+let wake=null;
+async function holdScreen(on){
+  try{
+    if(on&&!wake&&navigator.wakeLock){wake=await navigator.wakeLock.request("screen");wake.addEventListener("release",()=>wake=null);}
+    if(!on&&wake){await wake.release();wake=null;}
+  }catch(e){}
+}
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&db.live&&db.live.startedAt)holdScreen(true);});
+
+/* ---------- live session logic ---------- */
+function newLive(){
+  const su=db.setup;
+  return {id:"r"+Date.now().toString(36),participant:su.participant,condition:su.condition,session:su.session||String(nextSession(su.participant,su.condition)),
+    date:su.date||today(),role:db.settings.role,name:db.settings.name.trim(),startedAt:null,endedAt:null,
+    steps:STEPS.map(()=>({r:null,lat:null,end:null,intervened:false,pending:false,early:false,auto:false})),
+    cur:0,ref:null,resp:null,flushBefore6:false,notes:"",aborted:false,hist:[],buzzed:false};
+}
+function nextSession(p,c){return db.records.filter(r=>r.participant===p&&r.role===db.settings.role).length+1;}
+function snap(){const L=db.live;const c=JSON.parse(JSON.stringify(Object.assign({},L,{hist:[]})));L.hist.push(c);if(L.hist.length>60)L.hist.shift();}
+function undo(){const L=db.live;if(!L||!L.hist.length)return;const prev=L.hist.pop();const h=L.hist;db.live=Object.assign(prev,{hist:h});save();render();toast("한 단계 되돌렸어요");}
+
+function startSession(){
+  const L=newLive();L.startedAt=Date.now();L.ref=L.startedAt;db.live=L;save();holdScreen(true);render();
+}
+function finalizeFree(L,now){
+  FREE.forEach(i=>{const s=L.steps[i];if(s.r===null){s.r="-";s.auto=true;s.pending=false;s.end=now;}});
+}
+function respond(){
+  const L=db.live;if(!L||L.cur>15)return;const s=L.steps[L.cur];if(L.resp)return;
+  snap();const now=Date.now();L.resp=now;s.lat=Math.round((now-L.ref)/100)/10;
+  if(L.cur===15){const pend=FREE.filter(i=>L.steps[i].r===null);finalizeFree(L,now);if(pend.length)toast(pend.map(i=>i+1).join("·")+"단계를 −로 판정했어요");}
+  save();render();
+}
+function advance(L,now){
+  L.cur++;
+  while(L.cur<=15&&L.steps[L.cur].r!==null)L.cur++;
+  L.ref=now;L.resp=null;L.buzzed=false;
+  if(L.cur>15){L.endedAt=now;holdScreen(false);}
+}
+let lastMark=0;
+function mark(r,opt){
+  const L=db.live;if(!L||L.cur>15)return;const now=Date.now();
+  if(now-lastMark<700){toast("두 번 눌림을 막았어요. 다음 단계는 잠시 뒤 누르세요");return;}
+  lastMark=now;snap();const s=L.steps[L.cur];const no=L.cur+1;
+  setTimeout(()=>toast(no+"단계 "+(opt==="int"?"− (연구자 대신 수행)":sym(r))+" 기록"),0);
+  s.r=r;s.end=now;s.pending=false;
+  if(opt==="int")s.intervened=true;
+  if(s.lat===null&&L.resp)s.lat=Math.round((L.resp-L.ref)/100)/10;
+  if(L.cur===15)finalizeFree(L,now);
+  advance(L,now);save();render();
+}
+function skipFree(){
+  // 9·15단계를 건너뜀: 보류하고, 반응 시간은 끊지 않고 다음 단계로 이어서 잼
+  const L=db.live;if(!L||!FREE.includes(L.cur))return;snap();
+  L.steps[L.cur].pending=true;L.cur++;
+  while(L.cur<=15&&L.steps[L.cur].r!==null)L.cur++;
+  const n=L.cur===15?15:9;
+  save();render();toast(n+"단계 보류. 16단계를 시작할 때 판정해요");
+}
+function freeDone(i){
+  const L=db.live;if(!L)return;const s=L.steps[i];
+  if(L.cur>15||(L.cur===15&&L.resp)){toast("16단계를 이미 시작해서 바꿀 수 없어요. 칸을 눌러 고치세요");return;}
+  if(s.r!==null){toast((i+1)+"단계는 이미 기록했어요. 칸을 눌러 고칠 수 있어요");return;}
+  if(i===14&&L.steps[5].r===null){snap();L.flushBefore6=true;save();render();toast("6단계 전이라 인정하지 않아요. 6단계 뒤에 다시 내리면 누르세요");return;}
+  if(L.cur===i){mark("+");return;}
+  snap();const now=Date.now();s.r="+";s.end=now;s.early=!s.pending;s.pending=false;save();render();
+  toast((i+1)+"단계 + 기록");
+}
+function abortSession(){
+  const L=db.live;if(!L)return;snap();L.aborted=true;L.endedAt=Date.now();L.cur=16;holdScreen(false);save();render();
+}
+function saveLive(){
+  const L=db.live;const notes=$("#notes");if(notes)L.notes=notes.value;
+  const rec=JSON.parse(JSON.stringify(L));delete rec.hist;delete rec.ref;delete rec.resp;delete rec.buzzed;
+  db.records.push(rec);db.live=null;db.setup.session="";save();tab="rec";openRec=rec.id;render();toast("이 기기에 저장했어요");
+  cloudPut(rec).then(()=>{if(tab==="rec")renderRec();});
+  fileBackup();
+}
+function discardLive(){db.live=null;holdScreen(false);save();render();}
+
+/* ---------- sheets ---------- */
+function closeSheet(){const s=$("#sheet");s.hidden=true;s.innerHTML="";}
+$("#sheet").addEventListener("click",e=>{if(e.target.id==="sheet")closeSheet();});
+function editCell(i,target){
+  const steps=target.steps;const s=steps[i];
+  const sh=$("#sheet");
+  sh.innerHTML=`<div class="panel" role="dialog" aria-label="${i+1}단계 고치기">
+    <div><div class="lbl">${i+1}단계 고치기</div><div style="font-weight:500">${esc(STEPS[i][0])}</div></div>
+    <div class="opts">
+      <button class="btn" data-v="+" style="color:var(--pos)">+ 정반응</button>
+      <button class="btn" data-v="-" style="color:var(--neg)">− 오반응</button>
+      <button class="btn" data-v="N">못 봄</button>
+    </div>
+    <button class="btn ghost" data-v="x">닫기</button></div>`;
+  sh.hidden=false;
+  sh.querySelectorAll("[data-v]").forEach(b=>b.onclick=()=>{
+    const v=b.dataset.v;if(v==="x"){closeSheet();return;}
+    if(target===db.live)snap();
+    if(s.r!==null&&s.r!==v)s.log=(s.log||[]).concat([{from:s.r,to:v,at:Date.now(),afterSave:target!==db.live}]);
+    if(target!==db.live){target.cloudAt=null;target.fileAt=null;cloudPut(target);}
+    s.r=v;s.pending=false;s.auto=false;s.edited=true;if(!s.end)s.end=Date.now();
+    if(target===db.live&&i===db.live.cur){advance(db.live,Date.now());}
+    save();closeSheet();render();
+  });
+}
+function confirmSheet(msg,okLabel,fn,danger){
+  const sh=$("#sheet");
+  sh.innerHTML=`<div class="panel" role="dialog"><div style="font-weight:500">${esc(msg)}</div>
+  <div class="row2"><button class="btn" id="c-no">취소</button><button class="btn ${danger?"danger":"primary"}" id="c-ok">${esc(okLabel)}</button></div></div>`;
+  sh.hidden=false;$("#c-no").onclick=closeSheet;$("#c-ok").onclick=()=>{closeSheet();fn();};
+}
+
+/* ---------- render: observe ---------- */
+function segHTML(id,list,val){return `<div class="seg" id="${id}">`+list.map(v=>`<button type="button" aria-pressed="${v===val}" data-v="${esc(v)}">${esc(v)}</button>`).join("")+`</div>`;}
+function bindSeg(id,fn){document.querySelectorAll("#"+id+" button").forEach(b=>b.onclick=()=>fn(b.dataset.v));}
+
+function cellsHTML(steps,cur,clickable){
+  return `<div class="grid16">`+steps.map((s,i)=>{
+    let cls="",v="";
+    if(s.r==="+"){cls="p";v="+";}else if(s.r==="-"){cls="m";v="−";}else if(s.r==="N"){cls="x";v="못봄";}else if(s.pending){cls="w";v="보류";}
+    if(i===cur)cls+=" cur";
+    return `<button type="button" class="cell ${cls}" data-i="${i}" ${clickable?"":"disabled"} aria-label="${i+1}단계 ${v||"미기록"}"><span class="n">${i+1}${FREE.includes(i)?"†":""}</span><span class="v">${v||"&nbsp;"}</span></button>`;
+  }).join("")+`</div>`;
+}
+
+function renderSetup(){
+  const su=db.setup,st=db.settings;
+  const second=st.role==="제2관찰자";
+  const sess=su.session||(second?"":String(nextSession(su.participant,su.condition)));
+  $("#v-obs").innerHTML=`<div class="stack">
+  <div><h2>관찰 준비</h2><p class="sub">이 기기에 저장되는 기록은 이 관찰자의 것만이에요. 두 관찰자는 각자 기기로 따로 기록하세요.</p></div>
+  <div class="card stack">
+    <div><span class="lbl">이 기기의 관찰자</span>${segHTML("s-role",ROLES,st.role)}</div>
+    <div class="field"><label class="lbl" for="s-name">관찰자 이름(선택)</label><input id="s-name" value="${esc(st.name)}" placeholder="예: 이수진" autocomplete="off"></div>
+  </div>
+  <div class="card stack">
+    <div><span class="lbl">대상자 코드</span>${segHTML("s-part",PARTS,su.participant)}</div>
+    <div><span class="lbl">실험조건</span>${segHTML("s-cond",CONDS,su.condition)}</div>
+    <div class="row2">
+      <div class="field"><label class="lbl" for="s-date">관찰일</label><input id="s-date" type="date" value="${esc(su.date||today())}"></div>
+      <div class="field"><label class="lbl" for="s-sess">관찰회기${second?" (연구자에게 번호 확인)":""}</label><input id="s-sess" inputmode="numeric" value="${esc(sess)}" placeholder="${second?"연구자와 같은 번호":""}"></div>
+    </div>
+  </div>
+  <div class="note"><b>시작 버튼은 연구자가 "생리대 교체해 보자."라고 말을 마친 순간 누르세요.</b> 그때부터 1단계 반응 시간 10초를 재요. 화면에 소리는 나지 않아요.</div>
+  <label class="note" style="display:flex;gap:10px;align-items:center"><input type="checkbox" id="s-vib" ${st.vibrate?"checked":""} style="width:20px;height:20px"> 10초가 지나면 진동(지원하는 휴대폰만, 학생에게 들리지 않을 때만 켜세요)</label>
+  <button class="btn primary big" id="s-go">지시 끝 · 관찰 시작</button>
+  </div>`;
+  bindSeg("s-role",v=>{st.role=v;db.setup.session="";save();renderSetup();});
+  bindSeg("s-part",v=>{su.participant=v;su.session="";save();renderSetup();});
+  bindSeg("s-cond",v=>{su.condition=v;save();renderSetup();});
+  $("#s-name").oninput=e=>{st.name=e.target.value;save();};
+  $("#s-date").onchange=e=>{su.date=e.target.value;save();};
+  $("#s-sess").oninput=e=>{su.session=e.target.value.replace(/[^0-9]/g,"");save();};
+  $("#s-vib").onchange=e=>{st.vibrate=e.target.checked;save();};
+  $("#s-go").onclick=()=>{const v=$("#s-sess").value.trim();if(!v){toast("관찰회기 번호를 적어 주세요. 연구자 기록과 같은 번호여야 IOA를 맞출 수 있어요");$("#s-sess").focus();return;}su.session=v;startSession();};
+}
+
+function renderLive(){
+  const L=db.live,i=L.cur,s=L.steps[i],st=STEPS[i],free=FREE.includes(i);
+  const isStep16=i===15;
+  const pend=FREE.filter(k=>L.steps[k].pending&&L.steps[k].r===null);
+  const showChips=FREE.some(k=>L.steps[k].r===null&&k!==i);
+  $("#v-obs").innerHTML=`<div class="stack">
+  <div class="meta"><span class="pill">${esc(L.participant)}</span><span>${esc(L.condition)}</span><span>${esc(L.session)}회기</span><span>${esc(L.role)}</span><span class="clock" id="clock">00:00</span></div>
+  <button type="button" class="timer" id="timer" aria-live="off">
+    <span class="num" id="t-num">0.0</span>
+    <span class="what" id="t-what">${i===0?"지시 끝난 뒤":"직전 단계 끝난 뒤"} · ${i+1}단계</span>
+    <span class="act" id="t-act">학생이 시작하면 여기를 누르세요</span>
+    <span class="meter"><i id="t-bar" style="width:0%"></i></span>
+  </button>
+  <div class="card step">
+    <div class="no">단계 ${i+1} / 16${free?" · 순서와 관계없이 채점":""}</div>
+    <div class="txt">${esc(st[0])}</div>
+    <div class="crit"><span class="k p">+</span><span>${esc(st[1])}</span><span class="k n">−</span><span>${esc(st[2])}</span></div>
+  </div>
+  ${isStep16&&pend.length?`<div class="note"><b>${pend.map(k=>k+1).join("·")}단계 보류 중.</b> 학생이 손 씻기를 시작하면(타이머를 누르거나 16단계를 기록하면) 하지 않은 단계는 −로 판정해요.</div>`:""}
+  <div class="marks">
+    <button class="mk p" id="m-p">+<small>정반응</small></button>
+    <button class="mk n" id="m-n">−<small>오반응</small></button>
+  </div>
+  <div class="subacts">
+    ${free?`<button class="btn" id="m-skip" style="border-color:var(--warn);color:var(--warn)">건너뜀 · 16단계 전 판정</button>`:""}
+    <button class="btn" id="m-int">연구자 대신 수행(−)</button>
+    <button class="btn" id="m-na">못 봄</button>
+    <button class="btn ghost" id="m-undo" ${L.hist.length?"":"disabled"}>되돌리기</button>
+  </div>
+  ${showChips?`<div><span class="lbl">순서 예외 단계: 학생이 하는 순간 누르세요</span><div class="chips">${FREE.map(k=>{
+    const ss=L.steps[k];const ok=ss.r==="+";const done=ss.r!==null;
+    const title=k===8?"9 포장지 → 휴지통":"15 변기 물 내림";
+    const sub=done?(ok?"+ 기록함":"− 기록함"):ss.pending?"보류 중":(k===14&&L.flushBefore6&&L.steps[5].r===null?"6단계 전에 내림(불인정)":"아직");
+    return `<button type="button" class="chip ${ok?"ok":ss.pending?"wait":""}" data-free="${k}" ${done?"disabled":""}><b>${title}</b>${sub}</button>`;}).join("")}</div></div>`:""}
+  <div><span class="lbl">기록 현황 · 칸을 누르면 고칠 수 있어요</span>${cellsHTML(L.steps,i,true)}</div>
+  <div class="row2"><button class="btn danger" id="m-abort">관찰 중단</button><button class="btn ghost" id="m-help">채점 규칙</button></div>
+  </div>`;
+  $("#timer").onclick=respond;
+  $("#m-p").onclick=()=>mark("+");
+  $("#m-n").onclick=()=>mark("-");
+  $("#m-int").onclick=()=>mark("-","int");
+  $("#m-na").onclick=()=>mark("N");
+  $("#m-undo").onclick=undo;
+  if(free)$("#m-skip").onclick=skipFree;
+  document.querySelectorAll("[data-free]").forEach(b=>b.onclick=()=>freeDone(+b.dataset.free));
+  document.querySelectorAll("#v-obs .cell").forEach(b=>b.onclick=()=>{const k=+b.dataset.i;if(L.steps[k].r===null&&k!==L.cur){toast("아직 진행하지 않은 단계예요");return;}editCell(k,L);});
+  $("#m-abort").onclick=()=>confirmSheet("관찰을 중단할까요? 지금까지 기록한 단계는 남고, 나머지는 빈칸으로 저장돼요.","중단",abortSession,true);
+  $("#m-help").onclick=showRules;
+  tick();
+}
+
+function showRules(){
+  const sh=$("#sheet");
+  sh.innerHTML=`<div class="panel" role="dialog" style="max-height:80vh;overflow:auto">
+  <div class="lbl">채점 규칙 요약</div>
+  <div style="font-size:14px;display:grid;gap:8px">
+  <div><b>+</b> 촉진 없이 10초 이내에 스스로 시작해 정확하게 수행.</div>
+  <div><b>10초</b>는 반응을 시작하기까지의 시간이에요. 1단계는 지시가 끝난 때, 2단계부터는 직전 단계가 끝난 때부터 재요. 끝내는 데 걸리는 시간은 제한하지 않아요.</div>
+  <div><b>9·15단계</b>는 16단계 시작 전까지 하면 +. 15단계는 6단계 이후에 한 것만 인정해요.</div>
+  <div><b>연구자가 대신 수행</b>한 단계는 −, 다음 단계 10초는 연구자가 끝낸 때부터 재요. 연구자가 끝낸 순간 버튼을 누르세요.</div>
+  <div><b>스스로 고침</b>: 다음 단계로 넘어가기 전에 고치면 +, 넘어간 뒤 되돌아와 고치면 −(9·15단계 제외).</div>
+  <div><b>확인 질문</b>("이거 맞아요?")에 연구자가 반응하지 않았는데 10초 안에 스스로 하면 +. "도와주세요"는 −.</div>
+  <div><b>못 봄</b>은 IOA 계산에서 빼요. 특이사항에 이유를 적어 주세요.</div>
+  </div><button class="btn" id="r-x">닫기</button></div>`;
+  sh.hidden=false;$("#r-x").onclick=closeSheet;
+}
+
+function renderSummary(){
+  const L=db.live;const {p,pct}=pctOf(L.steps);const na=L.steps.filter(s=>s.r==="N").length;
+  const dur=L.endedAt&&L.startedAt?fmtClock(L.endedAt-L.startedAt):"";
+  $("#v-obs").innerHTML=`<div class="stack">
+  <div><h2>${L.aborted?"관찰 중단":"관찰 끝"} · 저장 전 확인</h2><p class="sub">${esc(L.participant)} · ${esc(L.condition)} · ${esc(L.session)}회기 · ${esc(L.role)}${L.name?" ("+esc(L.name)+")":""}</p></div>
+  <div class="kpis"><div><div class="k">독립수행(+)</div><div class="v">${p}/16</div></div><div><div class="k">수행률</div><div class="v">${pct}%</div></div><div><div class="k">총 소요</div><div class="v">${dur}</div></div></div>
+  ${na?`<div class="note">못 봄 ${na}개. 특이사항에 이유를 적어 주세요.</div>`:""}
+  ${(()=>{const late=L.steps.map((s,i)=>s.r==="+"&&s.lat!=null&&s.lat>LIMIT?i+1:null).filter(Boolean);return late.length?`<div class="note" style="background:var(--warn-soft)"><b>${late.join(", ")}단계는 10초가 넘어 시작했는데 +로 기록했어요.</b> 타이머를 늦게 누른 게 아니라면 −로 고쳐 주세요.</div>`:"";})()}
+  <div><span class="lbl">칸을 눌러 고칠 수 있어요</span>${cellsHTML(L.steps,-1,true)}</div>
+  ${detailTable(L)}
+  <div class="field"><label class="lbl" for="notes">특이사항</label><textarea id="notes" placeholder="불안·거부, 관찰 중단, 연습 상황과 다른 오류 등">${esc(L.notes)}</textarea></div>
+  <button class="btn primary big" id="sv">이 기기에 저장</button>
+  <div class="row2"><button class="btn ghost" id="un" ${L.hist.length?"":"disabled"}>되돌리기</button><button class="btn danger" id="dc">저장하지 않고 버리기</button></div>
+  </div>`;
+  $("#notes").oninput=e=>{L.notes=e.target.value;save();};
+  $("#sv").onclick=saveLive;
+  $("#un").onclick=undo;
+  $("#dc").onclick=()=>confirmSheet("이 회기 기록을 버릴까요? 되돌릴 수 없어요.","버리기",discardLive,true);
+  document.querySelectorAll("#v-obs .cell").forEach(b=>b.onclick=()=>editCell(+b.dataset.i,L));
+}
+
+function detailTable(R){
+  return `<div class="tbl-wrap"><table><thead><tr><th>단계</th><th>판정</th><th>반응 시작</th><th>메모</th></tr></thead><tbody>`+
+  R.steps.map((s,i)=>{
+    const notes=[];if(s.intervened)notes.push("연구자 대신 수행");if(s.early)notes.push("순서 앞당겨 수행");if(s.auto)notes.push("16단계 시작 시 미수행");
+    (s.log||[]).forEach(g=>notes.push("고침 "+sym(g.from)+"→"+sym(g.to)+(g.afterSave?"(저장 후 "+new Date(g.at).toLocaleString("ko-KR",{month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit",hour12:false})+")":"")));
+    if(s.r==="+"&&s.lat!=null&&s.lat>LIMIT)notes.push("10초 넘어 시작했는데 + · 확인");
+    if(i===14&&R.flushBefore6)notes.push("6단계 전에 물 내림 있었음");
+    const lat=s.lat==null?"":(s.lat.toFixed(1)+"초"+(s.lat>LIMIT?" ⚠":""));
+    const cls=s.r==="+"?"r-p":s.r==="-"?"r-m":"r-x";
+    return `<tr><td>${i+1}${FREE.includes(i)?"†":""}</td><td class="${cls}">${sym(s.r)||"–"}</td><td>${lat}</td><td class="wrap">${esc(notes.join(", "))}</td></tr>`;
+  }).join("")+`</tbody></table></div>`;
+}
+
+function tick(){
+  const L=db.live;if(!L||L.cur>15||tab!=="obs")return;
+  const now=Date.now();
+  const clock=$("#clock");if(clock)clock.textContent=fmtClock(now-L.startedAt);
+  const t=$("#timer");if(!t)return;
+  const el=L.resp?(L.resp-L.ref)/1000:(now-L.ref)/1000;
+  $("#t-num").innerHTML=(el<100?el.toFixed(1):Math.floor(el))+"<small>초</small>";
+  $("#t-bar").style.width=Math.min(100,el/LIMIT*100)+"%";
+  t.classList.remove("near","over","done");
+  if(L.resp){t.classList.add(el<=LIMIT?"done":"over");$("#t-act").textContent=el<=LIMIT?"10초 안에 시작 · 정확하면 +":"10초 넘어 시작 · −";}
+  else if(el>LIMIT){t.classList.add("over");$("#t-act").textContent="10초 지남 · 시작하지 않았으면 −";
+    if(!L.buzzed){L.buzzed=true;if(db.settings.vibrate&&navigator.vibrate){try{navigator.vibrate(180);}catch(e){}}}}
+  else if(el>7){t.classList.add("near");$("#t-act").textContent="학생이 시작하면 여기를 누르세요";}
+  else $("#t-act").textContent="학생이 시작하면 여기를 누르세요";
+}
+setInterval(tick,100);
+
+/* ---------- render: records ---------- */
+let openRec=null,recFilter="전체";
+function csv(){
+  const head=["대상자","관찰일","실험조건","회기","관찰자역할","관찰자","시작시각","총소요(초)"].concat(STEPS.map((_,i)=>"S"+(i+1)),["독립수행수","수행률(%)","못봄수"],STEPS.map((_,i)=>"반응초"+(i+1)),["연구자개입단계","중단","IOA(%)","IOA비교","수정내역","특이사항"]);
+  const rows=db.records.map(r=>{const {p,pct}=pctOf(r.steps);
+    return [r.participant,r.date,r.condition,r.session,r.role,r.name,r.startedAt?new Date(r.startedAt).toLocaleTimeString("ko-KR",{hour12:false}):"",r.endedAt&&r.startedAt?Math.round((r.endedAt-r.startedAt)/1000):""]
+    .concat(r.steps.map(s=>s.r==="-"?"-":s.r==="+"?"+":s.r==="N"?"못봄":""),[p,pct,r.steps.filter(s=>s.r==="N").length],r.steps.map(s=>s.lat==null?"":s.lat),
+    [r.steps.map((s,i)=>s.intervened?i+1:null).filter(Boolean).join(" "),r.aborted?"중단":"",r.ioa?r.ioa.pct:"",r.ioa?r.ioa.other:"",r.steps.map((s,i)=>(s.log||[]).map(g=>(i+1)+"단계 "+g.from+"→"+g.to+(g.afterSave?"(저장 후)":"")).join("; ")).filter(Boolean).join("; "),r.notes||""]);});
+  return [head].concat(rows).map(a=>a.map(v=>{v=String(v==null?"":v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;}).join(",")).join("\r\n");
+}
+function codeOf(r){return ["관찰",r.participant,r.date,r.condition,r.session,r.role,r.steps.map(s=>s.r==="+"?"+":s.r==="-"?"-":s.r==="N"?"N":"_").join("")].join("|");}
+async function copyText(text,okMsg){
+  try{await navigator.clipboard.writeText(text);toast(okMsg);}catch(e){toast("복사가 막혀 있어요. 아래 글자를 길게 눌러 복사하세요");}
+}
+/* ---------- backup ---------- */
+const roleTag=()=>db.settings.role==="연구자"?"researcher":"observer2";
+const stamp=()=>{const d=new Date();return today().replace(/-/g,"")+"_"+String(d.getHours()).padStart(2,"0")+String(d.getMinutes()).padStart(2,"0");};
+async function saveFile(name,text,mime){
+  if(EMBED){
+    try{const dl=window.claude&&window.claude.use?await window.claude.use("downloads"):null;
+      if(!dl){toast("이 화면에서는 파일 저장이 안 돼요. 복사를 쓰세요");return false;}
+      await dl.save({filename:name,data:text});return true;
+    }catch(e){if(!e||e.code!=="declined")toast("파일을 저장하지 못했어요. 다시 눌러 주세요");return false;}
+  }
+  try{const b=new Blob([text],{type:mime});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1500);return true;}
+  catch(e){toast("파일을 저장하지 못했어요");return false;}
+}
+function backupJSON(){return JSON.stringify({app:"mpt-observe",version:1,exportedAt:new Date().toISOString(),role:db.settings.role,records:db.records});}
+async function fileBackup(){
+  if(!db.records.length)return;
+  const ok=await saveFile("obs_backup_"+roleTag()+"_"+stamp()+".json",backupJSON(),"application/json");
+  if(ok){const t=Date.now();db.records.forEach(r=>r.fileAt=t);save();if(tab==="rec")renderRec();toast("백업 파일을 저장했어요. 휴대폰 '다운로드' 폴더를 확인하세요");}
+}
+function mergeRecords(list){
+  let n=0;(list||[]).forEach(r=>{if(r&&r.id&&Array.isArray(r.steps)&&r.steps.length===16&&!db.records.some(x=>x.id===r.id)){db.records.push(r);n++;}});
+  save();return n;
+}
+function restoreFile(file){
+  const fr=new FileReader();
+  fr.onload=()=>{try{const d=JSON.parse(fr.result);const n=mergeRecords(d.records);toast(n?n+"회기를 복원했어요":"새로 복원할 회기가 없어요(이미 있음)");render();}catch(e){toast("백업 파일을 읽지 못했어요. 이 도구에서 저장한 .json 파일인지 확인하세요");}};
+  fr.readAsText(file);
+}
+let cloud=null,cloudState="checking";
+async function initCloud(){
+  try{
+    if(!EMBED||!window.claude||!window.claude.use){cloudState="none";return;}
+    const [d,u]=await Promise.all([window.claude.use("db"),window.claude.use("user")]);
+    const uid=d&&u?await u.id():null;
+    if(!uid){cloudState="none";if(tab==="rec")renderRec();return;}
+    cloud={db:d,uid};cloudState="ok";
+    for(const r of db.records){if(!r.cloudAt)await cloudPut(r);}
+    if(tab==="rec")renderRec();
+  }catch(e){cloudState="none";}
+}
+async function cloudPut(r){
+  if(!cloud)return false;
+  try{const body=JSON.parse(JSON.stringify(r));delete body.cloudAt;delete body.fileAt;
+    await cloud.db.collection("data/users/"+cloud.uid).doc(r.id).set({json:JSON.stringify(body),savedAt:Date.now(),participant:r.participant,date:r.date,condition:r.condition,session:String(r.session),role:r.role});
+    r.cloudAt=Date.now();save();return true;
+  }catch(e){return false;}
+}
+async function restoreCloud(){
+  if(!cloud)return;
+  try{const q=await cloud.db.collection("data/users/"+cloud.uid).get();
+    const list=q.docs.map(d=>{try{const b=JSON.parse(d.data().json);b.cloudAt=d.data().savedAt;return b;}catch(e){return null;}});
+    const n=mergeRecords(list);toast(n?"클라우드에서 "+n+"회기를 복원했어요":"클라우드 기록이 모두 이 기기에 있어요");render();
+  }catch(e){toast("클라우드에 연결하지 못했어요. 인터넷 연결을 확인하세요");}
+}
+try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist();}catch(e){}
+
+function renderRec(){
+  const v=$("#v-rec");
+  if(openRec){const r=db.records.find(x=>x.id===openRec);if(r)return renderRecDetail(r);openRec=null;}
+  const list=db.records.filter(r=>recFilter==="전체"||r.participant===recFilter).slice().sort((a,b)=>(b.date+b.startedAt).localeCompare(a.date+a.startedAt));
+  v.innerHTML=`<div class="stack">
+  <div><h2>저장한 기록</h2><p class="sub">이 기기에 저장된 ${db.records.length}회기. 다른 관찰자의 기록은 보이지 않아요.</p></div>
+  ${segHTML("r-f",["전체"].concat(PARTS),recFilter)}
+  <div class="card" style="padding:0;overflow:hidden">${list.length?list.map(r=>{const {p,pct}=pctOf(r.steps);
+    return `<button type="button" class="rec" data-id="${r.id}"><span class="t">${esc(r.participant)} · ${esc(r.condition)} · ${esc(r.session)}회기</span><span class="pct">${pct}%</span><span class="s">${esc(r.date)} · ${esc(r.role)} · +${p}/16${r.ioa?" · IOA "+r.ioa.pct+"%":""}${r.aborted?" · 중단":""}</span></button>`;}).join(""):
+    `<div style="padding:18px" class="sub">아직 저장한 회기가 없어요. 관찰 탭에서 회기를 마치고 저장하면 여기에 쌓여요.</div>`}</div>
+  ${backupCard()}
+  ${db.records.length?`<div class="card stack"><div><div class="lbl">전체 기록 내보내기(CSV, 엑셀에서 열림)</div><p class="sub" style="margin:0">단계별 +/−, 반응 시작 초, 수행률, IOA, 특이사항이 들어가요.</p></div>
+    <div class="row2"><button class="btn primary" id="x-dl">CSV 파일 받기</button><button class="btn" id="x-cp">CSV 복사</button></div></div>`:""}
+  </div>`;
+  bindSeg("r-f",x=>{recFilter=x;renderRec();});
+  bindBackup();
+  v.querySelectorAll(".rec").forEach(b=>b.onclick=()=>{openRec=b.dataset.id;renderRec();});
+  if(db.records.length){
+    $("#x-dl").onclick=()=>saveFile("obs_records_"+roleTag()+"_"+stamp()+".csv","\ufeff"+csv(),"text/csv;charset=utf-8");
+    $("#x-cp").onclick=()=>copyText(csv(),"CSV를 복사했어요. 엑셀에 붙여 넣으세요");
+  }
+}
+function backupCard(){
+  const n=db.records.length,noFile=db.records.filter(r=>!r.fileAt).length,noCloud=db.records.filter(r=>!r.cloudAt).length;
+  const cloudLine=cloudState==="ok"?(noCloud?`클라우드 백업 대기 ${noCloud}회기(인터넷 연결 시 올라가요)`:`클라우드 백업 ✓ ${n}회기 모두`):cloudState==="checking"?"클라우드 확인 중":"클라우드 백업 없음(내려받은 파일로 쓰는 중)";
+  const warn=n&&noFile&&(cloudState!=="ok"||noCloud);
+  return `<div class="card stack" ${warn?'style="border-color:var(--warn)"':""}>
+    <div><div class="lbl">백업 상태</div>
+    <div style="font-weight:500">${n?(noFile?`백업 파일에 없는 회기 ${noFile}개`:`백업 파일 ✓ ${n}회기 모두`):"아직 저장한 회기가 없어요"}</div>
+    <div class="sub">${cloudLine}</div></div>
+    <div class="row2"><button class="btn${warn?" primary":""}" id="b-file" ${n?"":"disabled"}>백업 파일 저장</button><label class="btn" style="display:flex;align-items:center;justify-content:center;cursor:pointer">백업 불러오기<input type="file" id="b-in" accept=".json,application/json" hidden></label></div>
+    ${cloudState==="ok"?`<button class="btn ghost" id="b-cloud">클라우드에서 복원</button>`:""}
+  </div>`;
+}
+function bindBackup(){
+  const f=$("#b-file");if(f)f.onclick=fileBackup;
+  const i=$("#b-in");if(i)i.onchange=e=>{const file=e.target.files[0];if(file)restoreFile(file);e.target.value="";};
+  const c=$("#b-cloud");if(c)c.onclick=restoreCloud;
+}
+function renderRecDetail(r){
+  const {p,pct}=pctOf(r.steps);
+  $("#v-rec").innerHTML=`<div class="stack">
+  <button class="btn ghost" id="d-back" style="align-self:flex-start">← 목록</button>
+  <div><h2>${esc(r.participant)} · ${esc(r.condition)} · ${esc(r.session)}회기</h2><p class="sub">${esc(r.date)} · ${esc(r.role)}${r.name?" ("+esc(r.name)+")":""}${r.aborted?" · 중단한 회기":""}</p></div>
+  <div class="kpis"><div><div class="k">독립수행(+)</div><div class="v">${p}/16</div></div><div><div class="k">수행률</div><div class="v">${pct}%</div></div><div><div class="k">IOA</div><div class="v">${r.ioa?r.ioa.pct+"%":"–"}</div></div></div>
+  <div class="sub">백업: 파일 ${r.fileAt?"✓":"아직"} · 클라우드 ${r.cloudAt?"✓":cloudState==="ok"?"대기":"없음"}</div>
+  ${cellsHTML(r.steps,-1,true)}
+  ${detailTable(r)}
+  ${r.notes?`<div class="card"><div class="lbl">특이사항</div><div style="white-space:pre-wrap">${esc(r.notes)}</div></div>`:""}
+  <div class="card stack"><div><div class="lbl">IOA 비교 코드</div><p class="sub" style="margin:0">${r.role==="제2관찰자"?"회기가 끝나면 이 코드를 연구자에게 보내 주세요.":"제2관찰자에게 받은 코드를 IOA 탭에 붙여 넣으세요."}</p></div>
+    <div class="code" id="d-code">${esc(codeOf(r))}</div><button class="btn" id="d-cp">코드 복사</button></div>
+  <div class="row2"><button class="btn" id="d-ioa">이 회기로 IOA 계산</button><button class="btn danger" id="d-del">기록 삭제</button></div>
+  </div>`;
+  $("#d-back").onclick=()=>{openRec=null;renderRec();};
+  $("#d-cp").onclick=()=>copyText(codeOf(r),"코드를 복사했어요");
+  $("#d-ioa").onclick=()=>{ioaMine=r.id;tab="ioa";render();};
+  $("#d-del").onclick=()=>confirmSheet("이 회기 기록을 삭제할까요? 되돌릴 수 없어요.","삭제",()=>{db.records=db.records.filter(x=>x.id!==r.id);openRec=null;save();renderRec();toast("삭제했어요");},true);
+  document.querySelectorAll("#v-rec .cell").forEach(b=>b.onclick=()=>editCell(+b.dataset.i,r));
+}
+
+/* ---------- render: IOA ---------- */
+let ioaMine=null,ioaOther=Array(16).fill(null),ioaOtherLabel="";
+function parseCode(t){
+  t=t.trim();const parts=t.split("|");const res=parts[parts.length-1].replace(/\s/g,"");
+  if(res.length!==16||/[^+\-N_−]/.test(res))return null;
+  return {vals:[...res].map(c=>c==="+"?"+":(c==="-"||c==="−")?"-":c==="N"?"N":null),meta:parts.length>=7?{participant:parts[1],date:parts[2],condition:parts[3],session:parts[4],role:parts[5]}:null};
+}
+function renderIOA(){
+  const v=$("#v-ioa");
+  const mine=db.records.find(r=>r.id===ioaMine)||null;
+  const opts=db.records.slice().sort((a,b)=>(b.date+b.startedAt).localeCompare(a.date+a.startedAt));
+  let resHTML="";
+  if(mine&&ioaOther.every(x=>x!==null)){
+    let ag=0,dis=0,ex=0;const rows=mine.steps.map((s,i)=>{const a=s.r,b=ioaOther[i];let m;
+      if(a==="N"||b==="N"||!a){ex++;m="제외";}else if(a===b){ag++;m="O";}else{dis++;m="X";}
+      return `<tr><td>${i+1}</td><td>${sym(a)||"–"}</td><td>${sym(b)}</td><td class="${m==="O"?"agree":m==="X"?"dis":""}">${m}</td></tr>`;}).join("");
+    const pct=ag+dis?Math.round(ag/(ag+dis)*1000)/10:0;
+    resHTML=`<div class="card stack">
+      <div style="display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap"><div><div class="lbl">IOA(단계별 일치도)</div><div class="big-num" style="color:${pct>=80?"var(--pos)":"var(--neg)"}">${pct}%</div></div>
+      <div class="sub">일치 ${ag} ÷ (일치 ${ag} + 불일치 ${dis}) × 100${ex?` · 못 봄 ${ex}단계 제외`:""}</div></div>
+      ${pct<80?`<div class="note"><b>80% 미만이에요.</b> 다음 IOA 회기 전에 불일치 단계(${mine.steps.map((s,i)=>s.r&&s.r!=="N"&&ioaOther[i]!=="N"&&s.r!==ioaOther[i]?i+1:null).filter(Boolean).join(", ")})의 판정 기준을 함께 검토하고 재훈련하세요.</div>`:""}
+      <div class="tbl-wrap"><table><thead><tr><th>단계</th><th>이 기기</th><th>상대 관찰자</th><th>일치</th></tr></thead><tbody>${rows}</tbody></table></div>
+      <button class="btn primary" id="i-save">이 회기 기록에 IOA 저장</button></div>`;
+    setTimeout(()=>{const b=$("#i-save");if(b)b.onclick=()=>{mine.cloudAt=null;mine.fileAt=null;mine.ioa={pct,agree:ag,disagree:dis,excluded:ex,other:ioaOther.map(x=>x==="+"?"+":x==="-"?"-":"N").join(""),otherLabel:ioaOtherLabel};save();cloudPut(mine);toast("IOA "+pct+"%를 저장했어요");};},0);
+  }
+  v.innerHTML=`<div class="stack">
+  <div><h2>관찰자 간 신뢰도</h2><p class="sub">회기가 끝난 뒤 두 관찰자의 기록을 단계별로 비교해요. 관찰 중에는 서로 결과를 보지 마세요.</p></div>
+  <div class="card stack">
+    <div class="field"><label class="lbl" for="i-mine">1. 이 기기의 기록</label>
+    <select id="i-mine"><option value="">회기를 고르세요</option>${opts.map(r=>`<option value="${r.id}" ${r.id===ioaMine?"selected":""}>${esc(r.date)} · ${esc(r.participant)} · ${esc(r.condition)} · ${esc(r.session)}회기 (${esc(r.role)})</option>`).join("")}</select></div>
+    ${mine?cellsHTML(mine.steps,-1,false):""}
+  </div>
+  <div class="card stack">
+    <div class="field"><label class="lbl" for="i-code">2. 상대 관찰자의 비교 코드 붙여 넣기</label>
+    <textarea id="i-code" style="min-height:60px;font-family:var(--f-mono)" placeholder="관찰|대상자1|2026-10-21|기초선|1|제2관찰자|++-+...">${esc(ioaOtherLabel)}</textarea></div>
+    <div class="lbl" style="margin:0">또는 상대 기록지를 보고 직접 입력(누를 때마다 + → − → 못 봄)</div>
+    <div class="ioa-pick">${ioaOther.map((x,i)=>`<button type="button" data-i="${i}"><span class="n">${i+1}</span><span class="v" style="color:${x==="+"?"var(--pos)":x==="-"?"var(--neg)":"var(--na)"}">${x==="+"?"+":x==="-"?"−":x==="N"?"못봄":"·"}</span></button>`).join("")}</div>
+    <button class="btn ghost" id="i-clear">상대 기록 지우기</button>
+  </div>
+  ${resHTML||`<div class="note">이 기기의 기록을 고르고 상대 관찰자 16단계를 모두 채우면 IOA가 계산돼요.</div>`}
+  </div>`;
+  $("#i-mine").onchange=e=>{ioaMine=e.target.value||null;renderIOA();};
+  $("#i-code").onchange=$("#i-code").onpaste=e=>{setTimeout(()=>{const t=$("#i-code").value;const p=parseCode(t);if(!p){if(t.trim())toast("코드 끝에 16개 기호(+, -, N)가 있어야 해요");return;}
+    ioaOther=p.vals.map(x=>x===null?"N":x);ioaOtherLabel=t.trim();
+    if(p.meta&&mine&&(p.meta.participant!==mine.participant||p.meta.date!==mine.date||p.meta.session!==String(mine.session)))toast("대상자·날짜·회기가 이 기기 기록과 달라요. 같은 회기인지 확인하세요");
+    renderIOA();},0);};
+  v.querySelectorAll(".ioa-pick button").forEach(b=>b.onclick=()=>{const i=+b.dataset.i;const c=ioaOther[i];ioaOther[i]=c===null?"+":c==="+"?"-":c==="-"?"N":"+";ioaOtherLabel="";renderIOA();});
+  $("#i-clear").onclick=()=>{ioaOther=Array(16).fill(null);ioaOtherLabel="";renderIOA();};
+}
+
+/* ---------- main render ---------- */
+function render(){
+  document.querySelectorAll(".tabs button").forEach(b=>b.setAttribute("aria-selected",String(b.dataset.tab===tab)));
+  ["obs","rec","ioa"].forEach(k=>$("#v-"+k).hidden=k!==tab);
+  if(tab==="obs"){
+    if(!db.live)renderSetup();
+    else if(db.live.cur>15)renderSummary();
+    else renderLive();
+  }else if(tab==="rec")renderRec();
+  else renderIOA();
+}
+if(db.live&&db.live.cur<=15&&db.live.startedAt)holdScreen(true);
+render();
+initCloud();
+})();
+</script>
+
+</body>
+</html>
